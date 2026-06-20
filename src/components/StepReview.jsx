@@ -44,7 +44,7 @@ export default function StepReview({ onSubmit, submitting, error }) {
     <section>
       <p className="label-mono">Step 4</p>
       <h2 className="mt-1 font-display text-2xl text-ink">Review Order</h2>
-      <p className="mt-2 text-sm text-ink-muted">Set your quantity, add your details, and you're set.</p>
+      <p className="mt-2 font-sans text-sm text-ink-muted">Set your quantity, add your details, and you're set.</p>
 
       {/* Quantity */}
       <div className="mt-6 flex items-center justify-between rounded-xl bg-card px-4 py-3 ring-1 ring-line">
