@@ -11,7 +11,8 @@ const uid = () =>
   globalThis.crypto?.randomUUID?.() || 'p_' + Math.random().toString(36).slice(2)
 
 // The persistent live preview (sticky on desktop, visible on mobile). Phase 3:
-// empty cells are the upload target directly — no separate "Add Photos" step.
+// empty cells are the upload target directly (tap one slot at a time), plus a
+// "Mass upload" button for filling several empty slots at once in one go.
 export default function PreviewPanel() {
   const skuId = useOrderStore((s) => s.skuId)
   const orientation = useOrderStore((s) => s.orientation)
@@ -32,8 +33,33 @@ export default function PreviewPanel() {
   const filled = photos.filter(Boolean).length
 
   const inputRef = useRef(null)
+  const massInputRef = useRef(null)
   const targetIndexRef = useRef(null)
   const [uploading, setUploading] = useState(false)
+
+  // Shared by both the single-slot tap upload and the mass-upload button.
+  const uploadToSlot = async (index, file) => {
+    let url, name, dataUrl
+    try {
+      const r = await resizeImage(file)
+      url = URL.createObjectURL(r.blob)
+      dataUrl = r.dataUrl
+      name = file.name
+    } catch {
+      // Resize failed (e.g. unsupported format) — fall back to the original file.
+      url = URL.createObjectURL(file)
+      dataUrl = null
+      name = file.name
+    }
+    const photo = { id: uid(), url, name, dataUrl, driveUrl: null }
+    setPhotoAt(index, photo)
+
+    if (!IS_MOCK && dataUrl) {
+      savePhoto({ dataUrl, filename: name, orderId, name: contactName })
+        .then((driveUrl) => driveUrl && setPhotoDriveUrl(photo.id, driveUrl))
+        .catch((err) => console.error('Photo upload failed:', err))
+    }
+  }
 
   const handleEmptyClick = (index) => {
     targetIndexRef.current = index
@@ -45,28 +71,26 @@ export default function PreviewPanel() {
     e.target.value = ''
     const index = targetIndexRef.current
     if (!file || index == null) return
-
     setUploading(true)
     try {
-      let url, name, dataUrl
-      try {
-        const r = await resizeImage(file)
-        url = URL.createObjectURL(r.blob)
-        dataUrl = r.dataUrl
-        name = file.name
-      } catch {
-        // Resize failed (e.g. unsupported format) — fall back to the original file.
-        url = URL.createObjectURL(file)
-        dataUrl = null
-        name = file.name
-      }
-      const photo = { id: uid(), url, name, dataUrl, driveUrl: null }
-      setPhotoAt(index, photo)
+      await uploadToSlot(index, file)
+    } finally {
+      setUploading(false)
+    }
+  }
 
-      if (!IS_MOCK && dataUrl) {
-        savePhoto({ dataUrl, filename: name, orderId, name: contactName })
-          .then((driveUrl) => driveUrl && setPhotoDriveUrl(photo.id, driveUrl))
-          .catch((err) => console.error('Photo upload failed:', err))
+  // Mass upload: fills empty slots in order, one file per slot, re-reading the
+  // current slate each iteration so it never double-fills the same slot.
+  const onMassFileChange = async (e) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ''
+    if (!files.length) return
+    setUploading(true)
+    try {
+      for (const file of files) {
+        const slot = useOrderStore.getState().photos.findIndex((p) => !p)
+        if (slot === -1) break
+        await uploadToSlot(slot, file)
       }
     } finally {
       setUploading(false)
@@ -98,10 +122,23 @@ export default function PreviewPanel() {
       />
 
       <input ref={inputRef} type="file" accept="image/*" hidden onChange={onFileChange} />
+      <input ref={massInputRef} type="file" accept="image/*" multiple hidden onChange={onMassFileChange} />
 
       <p className="mt-3 text-center font-mono text-[11px] text-ink-muted">
         {uploading ? 'Adding photo…' : helper}
       </p>
+
+      {!allFilled && (
+        <div className="mt-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => massInputRef.current?.click()}
+            className="rounded-lg bg-card px-4 py-2 font-mono text-xs uppercase tracking-wider text-ink ring-1 ring-line transition hover:ring-rail"
+          >
+            Mass upload
+          </button>
+        </div>
+      )}
     </div>
   )
 }
