@@ -18,10 +18,17 @@ export default function FramePreview({
 }) {
   const ink = readableInk(colorHex)
   const showBaseHint = !engraving && !icon
+  // Real-interaction signal for touch devices, which don't get the hover
+  // trigger (see .frame-tilt in index.css) — settle once there's something
+  // worth looking at, not on tap.
+  const allFilled = photos.length > 0 && photos.every(Boolean)
 
   return (
     <div
-      className="w-full rounded-[16px] p-[5%] shadow-frame ring-1 ring-black/15"
+      className={[
+        'frame-tilt w-full rounded-[16px] p-[5%] shadow-frame ring-1 ring-black/15',
+        allFilled ? 'frame-tilt-settled' : '',
+      ].join(' ')}
       style={{ background: colorHex }}
     >
       <PhotoGrid
