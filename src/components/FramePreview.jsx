@@ -5,7 +5,7 @@
 // The frame render uses the CUSTOMER's colour — never the mint UI accent.
 
 import PhotoGrid from './PhotoGrid.jsx'
-import { readableInk } from '../config/colors.js'
+import { readableInk, placeholderOpacity } from '../config/colors.js'
 
 export default function FramePreview({
   grid,
@@ -59,7 +59,7 @@ export default function FramePreview({
           }
         >
           {engraving || (
-            <span style={{ opacity: showBaseHint ? 0.35 : 1 }}>
+            <span style={{ opacity: showBaseHint ? placeholderOpacity(colorHex) : 1 }}>
               {showBaseHint ? 'Your inscription' : ''}
             </span>
           )}
