@@ -10,7 +10,7 @@ export default function Confirmation({ orderId, onReset }) {
       </span>
 
       <h2 className="mt-5 font-display text-2xl text-ink">Order placed</h2>
-      <p className="mt-2 text-sm text-ink-muted">Keep this order ID — screenshot it.</p>
+      <p className="mt-2 font-sans text-sm text-ink-muted">Keep this order ID — screenshot it.</p>
       <p className="mt-4 rounded-xl bg-sage px-5 py-3 font-mono text-xl tracking-wide text-ink ring-1 ring-line">
         {orderId}
       </p>
