@@ -85,7 +85,7 @@ export default function StepReview({ onSubmit, submitting, error }) {
           <dd className="font-mono text-ink">{peso(unit)}</dd>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <dt className="text-ink-sec">Personalization (engraving + icon)</dt>
+          <dt className="text-ink-sec">Personalization (inscription + icon)</dt>
           <dd className="font-mono text-ink-muted">{peso(0)}</dd>
         </div>
         <div className="flex items-center justify-between text-sm">
