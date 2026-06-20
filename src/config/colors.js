@@ -1,17 +1,17 @@
 // SariSari Snaps — frame colour palette.
-// ⚠️ PLACEHOLDER hex values (brief Appendix B). Replace this one array once the
-// final palette is locked — that's the only edit needed. Colour has NO price impact.
+// Real hex, locked 2026-06-20 (pulled directly from the photo library's
+// color-palette flat-lay reference shot). Colour has NO price impact.
 
 export const FRAME_COLORS = [
-  { id: 'white',  label: 'White',  hex: '#FAFAFA' }, // default
-  { id: 'black',  label: 'Black',  hex: '#1C1C1C' },
-  { id: 'red',    label: 'Red',    hex: '#E5484D' },
-  { id: 'orange', label: 'Orange', hex: '#F76B15' },
-  { id: 'yellow', label: 'Yellow', hex: '#F5C518' },
-  { id: 'green',  label: 'Green',  hex: '#46A758' },
-  { id: 'blue',   label: 'Blue',   hex: '#3E63DD' },
-  { id: 'purple', label: 'Purple', hex: '#8E4EC6' },
-  { id: 'pink',   label: 'Pink',   hex: '#E93D82' },
+  { id: 'white',  label: 'White',  hex: '#FAF8F0' }, // default
+  { id: 'black',  label: 'Black',  hex: '#171717' },
+  { id: 'red',    label: 'Red',    hex: '#D64045' },
+  { id: 'orange', label: 'Orange', hex: '#E8691D' },
+  { id: 'yellow', label: 'Yellow', hex: '#F1BE23' },
+  { id: 'green',  label: 'Green',  hex: '#4C9A4C' },
+  { id: 'blue',   label: 'Blue',   hex: '#3D73A8' },
+  { id: 'purple', label: 'Purple', hex: '#7A5CB8' },
+  { id: 'pink',   label: 'Pink',   hex: '#D83A7D' },
 ]
 
 export const DEFAULT_COLOR_ID = 'white'
@@ -30,5 +30,5 @@ export function readableInk(hex) {
     0.2126 * toLin(c.slice(0, 2)) +
     0.7152 * toLin(c.slice(2, 4)) +
     0.0722 * toLin(c.slice(4, 6))
-  return L > 0.42 ? '#1a1a1a' : '#FAFAFA'
+  return L > 0.42 ? '#241A20' : '#F8EFE5'
 }
