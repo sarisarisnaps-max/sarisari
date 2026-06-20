@@ -52,4 +52,14 @@
       transform: rotate(0deg);
     }
   }
+
+  /* Mobile SKU "dial" — snap-scroll carousel with no visible scrollbar, so the
+     scroll gesture reads as turning a dial rather than dragging a normal list. */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
