@@ -33,7 +33,7 @@ export default function StepAddDetails() {
     <section>
       <p className="label-mono">Step 3</p>
       <h2 className="mt-1 font-display text-2xl text-ink">Add Personal Details</h2>
-      <p className="mt-2 text-sm text-ink-muted">All optional — a little something to make it yours.</p>
+      <p className="mt-2 font-sans text-sm text-ink-muted">All optional — a little something to make it yours.</p>
 
       <div className="mt-6">
         <label htmlFor="engraving" className="label-mono mb-2 block">
