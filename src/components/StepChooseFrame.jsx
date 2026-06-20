@@ -182,7 +182,7 @@ export default function StepChooseFrame() {
     <section>
       <p className="label-mono">Step 1</p>
       <h2 className="mt-1 font-display text-2xl text-ink">Choose Frame</h2>
-      <p className="mt-2 text-sm text-ink-muted">Pick a size — the preview updates as you go.</p>
+      <p className="mt-2 font-sans text-sm text-ink-muted">Pick a size — the preview updates as you go.</p>
 
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {SKUS.map((s) => (
