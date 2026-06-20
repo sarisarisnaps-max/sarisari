@@ -89,10 +89,12 @@ export const useOrderStore = create((set, get) => ({
         if (!photos[i]) {
           const f = files[fi++]
           photos[i] = {
-            id: uid(),
+            id: f.id || uid(),
             url: f.url ?? (f instanceof File ? URL.createObjectURL(f) : ''),
             name: f.name || 'photo',
             file: f instanceof File ? f : f.file ?? null,
+            dataUrl: f.dataUrl || null, // resized base64, used for the savePhoto upload
+            driveUrl: null, // filled in once savePhoto resolves (Phase 2)
           }
         }
       }
@@ -105,6 +107,13 @@ export const useOrderStore = create((set, get) => ({
       photos[index] = photo
       return { photos }
     }),
+
+  // Merge in the Drive URL once a photo's savePhoto upload resolves (matched
+  // by id so a sandbox reorder in the meantime doesn't misassign it).
+  setPhotoDriveUrl: (id, driveUrl) =>
+    set((s) => ({
+      photos: s.photos.map((p) => (p && p.id === id ? { ...p, driveUrl } : p)),
+    })),
 
   removePhotoAt: (index) =>
     set((s) => {
@@ -193,7 +202,8 @@ export const useOrderStore = create((set, get) => ({
       quantity: s.quantity,
       unitPrice,
       totalPrice: unitPrice * s.quantity,
-      photoUrls: s.photos.filter(Boolean).map((p) => p.url),
+      // Falls back to the local blob URL only in mock mode (no real upload happened).
+      photoUrls: s.photos.filter(Boolean).map((p) => p.driveUrl || p.url),
     }
   },
 }))
