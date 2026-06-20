@@ -1,4 +1,4 @@
-import { BRAND } from '../config/app.js'
+import { BRAND, IS_MOCK } from '../config/app.js'
 
 export default function Confirmation({ orderId, onReset }) {
   return (
@@ -16,8 +16,9 @@ export default function Confirmation({ orderId, onReset }) {
       </p>
 
       <p className="mt-5 max-w-sm text-sm text-ink-muted">
-        This is a preview build — no email or payment has been sent yet. Once the backend is wired,
-        you'll get a confirmation with GCash payment instructions.
+        {IS_MOCK
+          ? "This is a preview build — no email or payment has been sent yet. Once the backend is wired, you'll get a confirmation with GCash payment instructions."
+          : "Check your email for GCash payment instructions — reply with your payment screenshot and we'll start crafting."}
       </p>
 
       <p className="mt-6 font-display text-lg text-ink-sec">{BRAND.tagline}.</p>
