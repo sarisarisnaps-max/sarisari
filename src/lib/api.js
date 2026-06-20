@@ -8,7 +8,7 @@ async function post(body) {
   const res = await fetch(CONFIG.appsScriptUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, token: CONFIG.apiToken }),
   })
   if (!res.ok) throw new Error('Network error (' + res.status + ')')
   return res.json()
