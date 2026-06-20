@@ -1,7 +1,10 @@
-// SariSari Snaps — order configurator (Phase 1: UI on mock data).
+// SariSari Snaps — order configurator. Phases 2–4: real Drive save / Sheet
+// write / confirmation email / Mailchimp when VITE_APPS_SCRIPT_URL is set;
+// otherwise falls back to the Phase 1 mock submit.
 import { useState } from 'react'
 import { useOrderStore } from './store/useOrderStore.js'
 import { BRAND, IS_MOCK } from './config/app.js'
+import { savePhoto, submitOrder } from './lib/api.js'
 import Stepper from './components/Stepper.jsx'
 import StepChooseFrame from './components/StepChooseFrame.jsx'
 import StepPickColor from './components/StepPickColor.jsx'
@@ -39,15 +42,45 @@ export default function App() {
 
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState(null)
 
   const handleSubmit = async () => {
     setSubmitting(true)
-    // Phase 1: mock submit (no backend). Phases 2–3 wire savePhoto + submitOrder.
-    if (IS_MOCK) {
-      await new Promise((r) => setTimeout(r, 650))
+    setError(null)
+    try {
+      if (IS_MOCK) {
+        await new Promise((r) => setTimeout(r, 650))
+      } else {
+        // Most photos already uploaded in the background at Step 1; this
+        // catches any still-pending or failed ones before we submit so the
+        // Sheet always gets real Drive links, not local blob URLs.
+        const s = useOrderStore.getState()
+        await Promise.all(
+          s.photos.filter(Boolean).map(async (p) => {
+            if (p.driveUrl || !p.dataUrl) return
+            try {
+              const url = await savePhoto({
+                dataUrl: p.dataUrl,
+                filename: p.name,
+                orderId: s.orderId,
+                name: s.contact.name,
+              })
+              if (url) useOrderStore.getState().setPhotoDriveUrl(p.id, url)
+            } catch (err) {
+              console.error('Photo upload retry failed:', err)
+            }
+          }),
+        )
+        const payload = useOrderStore.getState().buildPayload()
+        const result = await submitOrder(payload)
+        if (!result?.ok) throw new Error(result?.error || 'Order submit failed')
+      }
+      setSubmitted(true)
+    } catch (err) {
+      setError(err.message || "Something went wrong — please try again, or message us if it keeps happening.")
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
-    setSubmitted(true)
   }
 
   const handleReset = () => {
@@ -70,7 +103,7 @@ export default function App() {
               {step === 1 && <StepChooseFrame />}
               {step === 2 && <StepPickColor />}
               {step === 3 && <StepAddDetails />}
-              {step === 4 && <StepReview onSubmit={handleSubmit} submitting={submitting} />}
+              {step === 4 && <StepReview onSubmit={handleSubmit} submitting={submitting} error={error} />}
             </>
           )}
         </div>
