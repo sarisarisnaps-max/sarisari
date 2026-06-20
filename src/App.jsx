@@ -12,6 +12,7 @@ import StepAddDetails from './components/StepAddDetails.jsx'
 import StepReview from './components/StepReview.jsx'
 import Confirmation from './components/Confirmation.jsx'
 import PreviewPanel from './components/PreviewPanel.jsx'
+import StickyPriceBar from './components/StickyPriceBar.jsx'
 
 function Header() {
   return (
@@ -94,7 +95,7 @@ export default function App() {
     <div className="min-h-screen">
       <Header />
 
-      <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1fr_minmax(320px,400px)] lg:py-12">
+      <main className={['mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1fr_minmax(320px,400px)] lg:py-12', submitted ? '' : 'pb-24'].join(' ')}>
         {/* Step content */}
         <div className="order-2 lg:order-1">
           {submitted ? (
@@ -117,6 +118,8 @@ export default function App() {
           </div>
         </aside>
       </main>
+
+      {!submitted && <StickyPriceBar />}
     </div>
   )
 }
