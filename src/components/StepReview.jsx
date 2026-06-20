@@ -24,7 +24,7 @@ function Field({ id, label, value, onChange, type = 'text', placeholder, optiona
   )
 }
 
-export default function StepReview({ onSubmit, submitting }) {
+export default function StepReview({ onSubmit, submitting, error }) {
   const skuId = useOrderStore((s) => s.skuId)
   const colorId = useOrderStore((s) => s.colorId)
   const quantity = useOrderStore((s) => s.quantity)
@@ -113,6 +113,9 @@ export default function StepReview({ onSubmit, submitting }) {
         <p className="mt-2 text-center font-mono text-[11px] text-ink-muted">
           Add your name, a valid email, and mobile to place the order.
         </p>
+      )}
+      {error && (
+        <p className="mt-2 text-center font-mono text-[11px] text-error">{error}</p>
       )}
     </section>
   )
