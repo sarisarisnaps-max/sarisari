@@ -1,8 +1,13 @@
 import { useRef } from 'react'
 import { useOrderStore } from '../store/useOrderStore.js'
 import { SKUS, skuById, hasOrientationToggle } from '../config/skus.js'
-import { peso } from '../config/app.js'
+import { peso, IS_MOCK } from '../config/app.js'
+import { resizeImage } from '../lib/resize.js'
+import { savePhoto } from '../lib/api.js'
 import StepNav from './StepNav.jsx'
+
+const uid = () =>
+  globalThis.crypto?.randomUUID?.() || 'p_' + Math.random().toString(36).slice(2)
 
 function MiniGrid({ cols, rows }) {
   return (
@@ -80,13 +85,40 @@ function PhotoUploader() {
   const photos = useOrderStore((s) => s.photos)
   const addPhotos = useOrderStore((s) => s.addPhotos)
   const removePhotoAt = useOrderStore((s) => s.removePhotoAt)
+  const setPhotoDriveUrl = useOrderStore((s) => s.setPhotoDriveUrl)
+  const orderId = useOrderStore((s) => s.orderId)
+  const contactName = useOrderStore((s) => s.contact.name)
   const inputRef = useRef(null)
   const filled = photos.filter(Boolean).length
 
-  const onFiles = (e) => {
+  // Resize each photo client-side (Phase 2), drop it into its slot, then —
+  // unless we're still in mock mode — fire off the Drive upload in the
+  // background and merge the returned URL in once it resolves.
+  const onFiles = async (e) => {
     const files = Array.from(e.target.files || [])
-    addPhotos(files.map((f) => ({ file: f, url: URL.createObjectURL(f), name: f.name })))
     e.target.value = ''
+    if (!files.length) return
+
+    const resized = await Promise.all(
+      files.map(async (f) => {
+        try {
+          const r = await resizeImage(f)
+          return { id: uid(), file: r.blob, url: URL.createObjectURL(r.blob), name: f.name, dataUrl: r.dataUrl }
+        } catch {
+          // Resize failed (e.g. unsupported format) — fall back to the original file.
+          return { id: uid(), file: f, url: URL.createObjectURL(f), name: f.name, dataUrl: null }
+        }
+      }),
+    )
+    addPhotos(resized)
+
+    if (IS_MOCK) return
+    for (const p of resized) {
+      if (!p.dataUrl) continue
+      savePhoto({ dataUrl: p.dataUrl, filename: p.name, orderId, name: contactName })
+        .then((url) => url && setPhotoDriveUrl(p.id, url))
+        .catch((err) => console.error('Photo upload failed:', err))
+    }
   }
 
   return (
