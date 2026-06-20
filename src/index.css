@@ -34,4 +34,22 @@
     touch-action: none;
     user-select: none;
   }
+
+  /* Live preview's "kink": sits at a slight tilt, straightens on a real signal.
+     Hover only drives this on devices that actually have hover (mouse + fine
+     pointer) — gating it out everywhere else avoids the jerky fake-hover/stuck-
+     hover behavior touchscreens produce on tap. On touch, .frame-tilt-settled
+     (driven by real interaction — all slots filled) is the only way to settle. */
+  .frame-tilt {
+    transform: rotate(-2deg);
+    transition: transform 220ms ease;
+  }
+  .frame-tilt.frame-tilt-settled {
+    transform: rotate(0deg);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .frame-tilt:hover {
+      transform: rotate(0deg);
+    }
+  }
 }
