@@ -15,6 +15,7 @@ export default function FramePreview({
   icon = '',
   interactive = false,
   onReorder,
+  onEmptyClick,
 }) {
   const ink = readableInk(colorHex)
   const showBaseHint = !engraving && !icon
@@ -37,6 +38,7 @@ export default function FramePreview({
         frameHex={colorHex}
         interactive={interactive}
         onReorder={onReorder}
+        onEmptyClick={onEmptyClick}
       />
 
       {/* base strip: inscription left, icon right (small right inset).
