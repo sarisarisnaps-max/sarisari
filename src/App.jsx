@@ -18,11 +18,13 @@ function Header() {
     <header className="border-b border-line">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <div className="flex items-center gap-2.5">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-white">
+          {/* Logo mark is brand identity, not a CTA — stays Brand Green even
+              though the primary action color moved to gold. */}
+          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-lg bg-brand text-white">
             <svg viewBox="0 0 32 32" className="h-5 w-5">
               <rect x="11.5" y="6.5" width="9" height="4" rx="1.5" fill="currentColor" />
               <rect x="5.5" y="9" width="21" height="15.5" rx="3.2" fill="currentColor" />
-              <circle cx="16" cy="16.75" r="4.3" fill="#166534" />
+              <circle cx="16" cy="16.75" r="4.3" fill="#F8EFE5" />
             </svg>
           </span>
           <div className="leading-tight">
