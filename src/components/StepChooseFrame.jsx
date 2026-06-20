@@ -27,7 +27,6 @@ function MiniGrid({ cols, rows }) {
 // own — it's clipped by the card's overflow-hidden + rounded-2xl); unselected
 // photo is a smaller inset thumbnail with its own margin + rounded corners.
 function SkuTile({ sku, selected, onSelect }) {
-  const flex = hasOrientationToggle(sku)
   return (
     <button
       type="button"
@@ -41,11 +40,6 @@ function SkuTile({ sku, selected, onSelect }) {
       {sku.hero && (
         <span className="absolute right-2 top-2 z-10 rounded-full bg-selected px-2 py-0.5 font-mono text-[11px] text-white">
           Popular
-        </span>
-      )}
-      {flex && (
-        <span className="absolute left-2 top-2 z-10 rounded-full bg-card/90 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-ink-muted ring-1 ring-line">
-          flex
         </span>
       )}
 
@@ -63,13 +57,35 @@ function SkuTile({ sku, selected, onSelect }) {
       </div>
 
       {sku.photo && (
+        // Selected = full-bleed (clipped flush by the card's own rounded-2xl +
+        // overflow-hidden); unselected = a smaller inset thumbnail with its own
+        // margin + tighter corners. Both states are expressed as real, shared
+        // CSS properties (not a Tailwind class swap) so `transition-all` can
+        // morph between them smoothly instead of snapping.
         <img
           src={sku.photo}
           alt={sku.name}
-          className={
+          className="absolute object-cover transition-all duration-300 ease-out"
+          style={
             selected
-              ? 'absolute inset-y-0 right-0 h-full w-[56%] object-cover'
-              : 'absolute inset-y-3 right-3 h-[calc(100%-1.5rem)] w-[46%] rounded-xl object-cover ring-1 ring-black/10'
+              ? {
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  width: '56%',
+                  height: '100%',
+                  borderRadius: 0,
+                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0)',
+                }
+              : {
+                  top: '0.75rem',
+                  bottom: '0.75rem',
+                  right: '0.75rem',
+                  width: '46%',
+                  height: 'calc(100% - 1.5rem)',
+                  borderRadius: '0.75rem',
+                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)',
+                }
           }
         />
       )}
@@ -112,6 +128,53 @@ export default function StepChooseFrame() {
   const cardRefs = useRef({})
   const settleTimer = useRef(null)
   const centeredOnce = useRef(false)
+  const rafPending = useRef(false)
+  const isMobile = useRef(true)
+
+  // Live "dial" feel (mobile only): as you drag, the centered card stays
+  // full-size/opaque and neighbors shrink + dim in real time, tracking scroll
+  // position every frame rather than waiting for the settle debounce below.
+  // Imperative DOM writes (not React state) so this never re-renders on scroll.
+  const applyCardTransforms = () => {
+    const container = scrollRef.current
+    if (!container || !isMobile.current) return
+    const center = container.scrollLeft + container.clientWidth / 2
+    const half = container.clientWidth / 2 || 1
+    for (const s of SKUS) {
+      const el = cardRefs.current[s.id]
+      if (!el) continue
+      const cardCenter = el.offsetLeft + el.offsetWidth / 2
+      const t = Math.min(1, Math.abs(cardCenter - center) / half)
+      const scale = 1 - t * 0.12
+      const opacity = 1 - t * 0.55
+      el.style.transform = `scale(${scale})`
+      el.style.opacity = opacity
+    }
+  }
+
+  const resetCardTransforms = () => {
+    for (const s of SKUS) {
+      const el = cardRefs.current[s.id]
+      if (!el) continue
+      el.style.transform = ''
+      el.style.opacity = ''
+    }
+  }
+
+  // Track the sm: breakpoint so the live transform only ever runs on the
+  // mobile carousel — on desktop's wrapping grid every card stays full-size.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 640px)')
+    const sync = () => {
+      isMobile.current = !mq.matches
+      if (!isMobile.current) resetCardTransforms()
+      else applyCardTransforms()
+    }
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Mobile "dial": center the currently-selected card on first mount (starts
   // on Classic, the store default) without animating the page load.
@@ -121,12 +184,23 @@ export default function StepChooseFrame() {
     if (el) {
       el.scrollIntoView({ inline: 'center', block: 'nearest' })
       centeredOnce.current = true
+      requestAnimationFrame(applyCardTransforms)
     }
   }, [skuId])
 
-  // While scrolling, whichever card settles closest to the container's
-  // center becomes selected automatically — tapping a card still also works.
+  // While scrolling: every frame, update scale/opacity live (rAF-throttled so
+  // rapid scroll events only schedule one paint each); separately, once
+  // scrolling settles for 120ms, whichever card is closest to center becomes
+  // selected — tapping a card still also works.
   const handleScroll = () => {
+    if (!rafPending.current) {
+      rafPending.current = true
+      requestAnimationFrame(() => {
+        applyCardTransforms()
+        rafPending.current = false
+      })
+    }
+
     if (settleTimer.current) clearTimeout(settleTimer.current)
     settleTimer.current = setTimeout(() => {
       const container = scrollRef.current
@@ -168,7 +242,7 @@ export default function StepChooseFrame() {
             ref={(el) => {
               if (el) cardRefs.current[s.id] = el
             }}
-            className="w-[76%] flex-shrink-0 snap-center sm:w-auto"
+            className="w-[76%] flex-shrink-0 snap-center transition-[transform,opacity] duration-100 ease-out will-change-transform sm:w-auto sm:!scale-100 sm:!opacity-100"
           >
             <SkuTile sku={s} selected={s.id === skuId} onSelect={selectSku} />
           </div>
