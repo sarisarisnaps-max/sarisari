@@ -37,7 +37,7 @@ export default function StepAddDetails() {
 
       <div className="mt-6">
         <label htmlFor="engraving" className="label-mono mb-2 block">
-          Name or engraving
+          Name or inscription
         </label>
         <input
           id="engraving"
