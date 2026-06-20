@@ -124,8 +124,11 @@ export default function App() {
       <Header />
 
       <main className={['mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1fr_minmax(320px,400px)] lg:py-12', submitted ? '' : 'pb-28'].join(' ')}>
-        {/* Step content */}
-        <div className="order-2 lg:order-1">
+        {/* Step content. Mobile shows this FIRST (step nav + heading give a
+            first-time visitor context before they ever see the preview) —
+            desktop keeps the preview as the visually-first right-hand column
+            via lg:order, unaffected by this. */}
+        <div className="order-1 lg:order-1">
           {submitted ? (
             <Confirmation orderId={orderId} onReset={handleReset} />
           ) : (
@@ -140,7 +143,7 @@ export default function App() {
         </div>
 
         {/* Live preview */}
-        <aside className="order-1 lg:order-2">
+        <aside className="order-2 lg:order-2">
           <div className="lg:sticky lg:top-6">
             <PreviewPanel />
           </div>
