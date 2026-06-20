@@ -24,7 +24,10 @@ function Field({ id, label, value, onChange, type = 'text', placeholder, optiona
   )
 }
 
-export default function StepReview({ onSubmit, submitting, error }) {
+// Place Order now lives in the sticky bar (App.jsx computes canSubmit and
+// passes the handler down to StickyPriceBar) — this step just collects the
+// fields and shows the inline validation hint + any submit error.
+export default function StepReview({ submitting, error }) {
   const skuId = useOrderStore((s) => s.skuId)
   const colorId = useOrderStore((s) => s.colorId)
   const quantity = useOrderStore((s) => s.quantity)
@@ -104,11 +107,7 @@ export default function StepReview({ onSubmit, submitting, error }) {
         </div>
       </dl>
 
-      <StepNav
-        canContinue={!!canSubmit}
-        onContinue={onSubmit}
-        continueLabel={submitting ? 'Placing order…' : 'Place order'}
-      />
+      <StepNav />
       {!canSubmit && !submitting && (
         <p className="mt-2 text-center font-mono text-[11px] text-ink-muted">
           Add your name, a valid email, and mobile to place the order.
