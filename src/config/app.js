@@ -7,7 +7,7 @@ export const CONFIG = {
   // Empty in Phase 1 → app runs fully on mock data, no network.
   appsScriptUrl: import.meta.env.VITE_APPS_SCRIPT_URL || '',
   // Default Drive parent folder name (the script also defaults to this).
-  driveParentFolder: import.meta.env.VITE_DRIVE_PARENT_FOLDER || 'SariSari Orders',
+  driveParentFolder: import.meta.env.VITE_DRIVE_PARENT_FOLDER || 'Sari Sari Orders',
   currency: 'PHP',
   currencySymbol: '₱',
 }
