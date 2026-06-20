@@ -2,6 +2,8 @@
 // When every slot is filled and `interactive` is on, the tiles become a
 // dnd-kit single-container sortable (the "sandbox"). Reordering is EPHEMERAL —
 // it only shuffles the local array and is never sent to the backend.
+// Empty slots double as the upload target (Phase 3): tap/click one to open the
+// file picker for that exact slot — no separate "Add Photos" control needed.
 
 import { useState } from 'react'
 import {
@@ -49,23 +51,34 @@ function SortableCell({ photo }) {
   )
 }
 
-function StaticCell({ photo, index, frameHex }) {
+function StaticCell({ photo, index, frameHex, onEmptyClick }) {
   const ink = readableInk(frameHex)
-  return (
-    <div className="relative aspect-square overflow-hidden rounded-[7%] ring-1 ring-black/10">
-      {photo ? (
+
+  if (photo) {
+    return (
+      <div className="relative aspect-square overflow-hidden rounded-[7%] ring-1 ring-black/10">
         <img src={photo.url} alt={photo.name} className="h-full w-full object-cover" />
-      ) : (
-        <div
-          className="flex h-full w-full items-center justify-center"
-          style={{ background: `color-mix(in srgb, ${frameHex} 86%, ${ink} 14%)`, color: ink }}
-        >
-          <span className="font-mono text-[clamp(10px,2.4vw,13px)] opacity-50">
-            {index + 1}
-          </span>
-        </div>
-      )}
-    </div>
+      </div>
+    )
+  }
+
+  const clickable = !!onEmptyClick
+
+  return (
+    <button
+      type="button"
+      onClick={clickable ? () => onEmptyClick(index) : undefined}
+      disabled={!clickable}
+      aria-label={`Add photo to slot ${index + 1}`}
+      className={[
+        'relative flex aspect-square w-full flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[7%] ring-1 ring-black/10 transition',
+        clickable ? 'cursor-pointer hover:brightness-95' : 'cursor-default',
+      ].join(' ')}
+      style={{ background: `color-mix(in srgb, ${frameHex} 86%, ${ink} 14%)`, color: ink }}
+    >
+      <span className="font-mono text-[clamp(15px,3.4vw,20px)] leading-none opacity-60">+</span>
+      <span className="font-mono text-[clamp(9px,2vw,11px)] opacity-40">{index + 1}</span>
+    </button>
   )
 }
 
@@ -75,6 +88,7 @@ export default function PhotoGrid({
   frameHex,
   interactive = false,
   onReorder,
+  onEmptyClick,
 }) {
   const allFilled = photos.length > 0 && photos.every(Boolean)
   const enableDrag = interactive && allFilled
@@ -94,7 +108,13 @@ export default function PhotoGrid({
         enableDrag && p ? (
           <SortableCell key={p.id} photo={p} />
         ) : (
-          <StaticCell key={p?.id || `empty-${i}`} photo={p} index={i} frameHex={frameHex} />
+          <StaticCell
+            key={p?.id || `empty-${i}`}
+            photo={p}
+            index={i}
+            frameHex={frameHex}
+            onEmptyClick={interactive ? onEmptyClick : undefined}
+          />
         ),
       )}
     </div>
