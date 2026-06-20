@@ -14,6 +14,8 @@ import Confirmation from './components/Confirmation.jsx'
 import PreviewPanel from './components/PreviewPanel.jsx'
 import StickyPriceBar from './components/StickyPriceBar.jsx'
 
+const validEmail = (e) => /\S+@\S+\.\S+/.test(e)
+
 function Header() {
   return (
     <header className="border-b border-line">
@@ -42,6 +44,9 @@ export default function App() {
   const step = useOrderStore((s) => s.step)
   const orderId = useOrderStore((s) => s.orderId)
   const reset = useOrderStore((s) => s.reset)
+  const next = useOrderStore((s) => s.next)
+  const photos = useOrderStore((s) => s.photos)
+  const contact = useOrderStore((s) => s.contact)
 
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -91,11 +96,34 @@ export default function App() {
     reset()
   }
 
+  // Per-step primary-action state for the sticky bar (2026-06-21: Next/Place
+  // Order now lives there on every step, not in each step's own page content).
+  const filled = photos.filter(Boolean).length
+  const allFilled = photos.length > 0 && filled === photos.length
+  const remaining = photos.length - filled
+  const canSubmit = !!(contact.name.trim() && validEmail(contact.email) && contact.mobile.trim() && !submitting)
+
+  const navByStep = {
+    1: {
+      canContinue: allFilled,
+      label: allFilled ? 'Next' : `Add ${remaining} more photo${remaining > 1 ? 's' : ''}`,
+      onContinue: next,
+    },
+    2: { canContinue: true, label: 'Next', onContinue: next },
+    3: { canContinue: true, label: 'Next', onContinue: next },
+    4: {
+      canContinue: canSubmit,
+      label: submitting ? 'Placing order…' : 'Place order',
+      onContinue: handleSubmit,
+    },
+  }
+  const nav = navByStep[step]
+
   return (
     <div className="min-h-screen">
       <Header />
 
-      <main className={['mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1fr_minmax(320px,400px)] lg:py-12', submitted ? '' : 'pb-24'].join(' ')}>
+      <main className={['mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1fr_minmax(320px,400px)] lg:py-12', submitted ? '' : 'pb-28'].join(' ')}>
         {/* Step content */}
         <div className="order-2 lg:order-1">
           {submitted ? (
@@ -106,7 +134,7 @@ export default function App() {
               {step === 1 && <StepChooseFrame />}
               {step === 2 && <StepPickColor />}
               {step === 3 && <StepAddDetails />}
-              {step === 4 && <StepReview onSubmit={handleSubmit} submitting={submitting} error={error} />}
+              {step === 4 && <StepReview submitting={submitting} error={error} />}
             </>
           )}
         </div>
@@ -119,7 +147,9 @@ export default function App() {
         </aside>
       </main>
 
-      {!submitted && <StickyPriceBar />}
+      {!submitted && (
+        <StickyPriceBar canContinue={nav.canContinue} continueLabel={nav.label} onContinue={nav.onContinue} />
+      )}
     </div>
   )
 }
