@@ -1,10 +1,11 @@
+import { useEffect, useRef } from 'react'
 import { useOrderStore } from '../store/useOrderStore.js'
-import { SKUS, skuById, hasOrientationToggle } from '../config/skus.js'
+import { SKUS, hasOrientationToggle } from '../config/skus.js'
 import { peso } from '../config/app.js'
-import StepNav from './StepNav.jsx'
 
-// Fallback for any SKU missing a real photo — shouldn't happen now that all 9
-// have one, but keeps the tile from rendering blank if that ever changes.
+// Always-shown identity glyph (brand-coloured dot grid matching the SKU's own
+// shape) — separate from the real photo, which lives on the right side of the
+// tile. Both are shown together per the 2026-06-21 tile mockup.
 function MiniGrid({ cols, rows }) {
   return (
     <div
@@ -21,6 +22,10 @@ function MiniGrid({ cols, rows }) {
   )
 }
 
+// Landscape tile: text column on the left, real photo on the right. Selected
+// photo bleeds flush to the card's own rounded edge (no gap, no radius of its
+// own — it's clipped by the card's overflow-hidden + rounded-2xl); unselected
+// photo is a smaller inset thumbnail with its own margin + rounded corners.
 function SkuTile({ sku, selected, onSelect }) {
   const flex = hasOrientationToggle(sku)
   return (
@@ -29,7 +34,7 @@ function SkuTile({ sku, selected, onSelect }) {
       onClick={() => onSelect(sku.id)}
       aria-pressed={selected}
       className={[
-        'relative flex w-full flex-col items-start gap-3 overflow-visible rounded-xl bg-card p-3 text-left transition',
+        'relative flex h-32 w-full overflow-hidden rounded-2xl bg-card text-left transition',
         selected ? 'ring-2 ring-selected shadow-card' : 'ring-1 ring-line hover:ring-rail',
       ].join(' ')}
     >
@@ -38,34 +43,36 @@ function SkuTile({ sku, selected, onSelect }) {
           Popular
         </span>
       )}
-      <span className="flex h-12 items-end gap-2">
-        {sku.photo ? (
-          <img
-            src={sku.photo}
-            alt={sku.name}
-            className={[
-              'rounded-lg object-cover ring-1 ring-black/10 transition-all',
-              selected ? '-mt-3 h-20 w-20 shadow-frame' : 'h-12 w-12',
-            ].join(' ')}
-          />
-        ) : (
-          <span className={selected ? 'text-selected' : 'text-ink-muted'}>
-            <MiniGrid cols={sku.base.cols} rows={sku.base.rows} />
-          </span>
-        )}
-        {flex && (
-          <span className="rounded-full bg-soft px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-ink-muted ring-1 ring-line">
-            flex
-          </span>
-        )}
-      </span>
-      <span className="w-full">
-        <span className="block font-display text-base leading-tight text-ink">{sku.name}</span>
-        <span className="label-mono">
-          {sku.slots} {sku.slots > 1 ? 'photos' : 'photo'}
+      {flex && (
+        <span className="absolute left-2 top-2 z-10 rounded-full bg-card/90 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-ink-muted ring-1 ring-line">
+          flex
         </span>
-      </span>
-      <span className="font-mono text-sm text-ink-sec">{peso(sku.price)}</span>
+      )}
+
+      <div className="z-10 flex w-[46%] shrink-0 flex-col justify-between p-3">
+        <span className="text-selected">
+          <MiniGrid cols={sku.base.cols} rows={sku.base.rows} />
+        </span>
+        <span>
+          <span className="block font-display text-base leading-tight text-ink">{sku.name}</span>
+          <span className="label-mono">
+            {sku.slots} {sku.slots > 1 ? 'photos' : 'photo'}
+          </span>
+        </span>
+        <span className="font-mono text-sm text-ink-sec">{peso(sku.price)}</span>
+      </div>
+
+      {sku.photo && (
+        <img
+          src={sku.photo}
+          alt={sku.name}
+          className={
+            selected
+              ? 'absolute inset-y-0 right-0 h-full w-[56%] object-cover'
+              : 'absolute inset-y-3 right-3 h-[calc(100%-1.5rem)] w-[46%] rounded-xl object-cover ring-1 ring-black/10'
+          }
+        />
+      )}
     </button>
   )
 }
@@ -99,11 +106,47 @@ function OrientationToggle() {
 export default function StepChooseFrame() {
   const skuId = useOrderStore((s) => s.skuId)
   const selectSku = useOrderStore((s) => s.selectSku)
-  const photos = useOrderStore((s) => s.photos)
-  const sku = skuById(skuId)
-  const filled = photos.filter(Boolean).length
-  const allFilled = photos.length > 0 && filled === photos.length
-  const remaining = photos.length - filled
+  const sku = SKUS.find((s) => s.id === skuId)
+
+  const scrollRef = useRef(null)
+  const cardRefs = useRef({})
+  const settleTimer = useRef(null)
+  const centeredOnce = useRef(false)
+
+  // Mobile "dial": center the currently-selected card on first mount (starts
+  // on Classic, the store default) without animating the page load.
+  useEffect(() => {
+    if (centeredOnce.current) return
+    const el = cardRefs.current[skuId]
+    if (el) {
+      el.scrollIntoView({ inline: 'center', block: 'nearest' })
+      centeredOnce.current = true
+    }
+  }, [skuId])
+
+  // While scrolling, whichever card settles closest to the container's
+  // center becomes selected automatically — tapping a card still also works.
+  const handleScroll = () => {
+    if (settleTimer.current) clearTimeout(settleTimer.current)
+    settleTimer.current = setTimeout(() => {
+      const container = scrollRef.current
+      if (!container) return
+      const center = container.scrollLeft + container.clientWidth / 2
+      let closestId = null
+      let closestDist = Infinity
+      for (const s of SKUS) {
+        const el = cardRefs.current[s.id]
+        if (!el) continue
+        const cardCenter = el.offsetLeft + el.offsetWidth / 2
+        const dist = Math.abs(cardCenter - center)
+        if (dist < closestDist) {
+          closestDist = dist
+          closestId = s.id
+        }
+      }
+      if (closestId && closestId !== skuId) selectSku(closestId)
+    }, 120)
+  }
 
   return (
     <section>
@@ -111,12 +154,22 @@ export default function StepChooseFrame() {
       <h2 className="mt-1 font-display text-2xl text-ink">Choose Frame</h2>
       <p className="mt-2 font-sans text-sm text-ink-muted">Pick a size — the preview updates as you go.</p>
 
-      {/* Mobile: horizontal snap-scroll with a peek of the next card, so size/price
-          stay comparable without a long vertical scroll. Desktop: wrapping grid —
-          no scroll-length problem to solve there. */}
-      <div className="mt-5 flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 sm:snap-none">
+      {/* Mobile: scroll-driven dial — snap-center carousel, no visible
+          scrollbar, edge padding so the first/last cards can fully center
+          instead of clipping against the screen edge. Desktop: wrapping grid. */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="scrollbar-hide mt-5 flex gap-3 overflow-x-auto px-[12%] pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none"
+      >
         {SKUS.map((s) => (
-          <div key={s.id} className="w-[42%] min-w-[148px] flex-shrink-0 snap-start sm:w-auto sm:min-w-0">
+          <div
+            key={s.id}
+            ref={(el) => {
+              if (el) cardRefs.current[s.id] = el
+            }}
+            className="w-[76%] flex-shrink-0 snap-center sm:w-auto"
+          >
             <SkuTile sku={s} selected={s.id === skuId} onSelect={selectSku} />
           </div>
         ))}
@@ -127,12 +180,6 @@ export default function StepChooseFrame() {
       <p className="mt-6 font-sans text-sm text-ink-muted">
         Tap an empty tile in the live preview to add your photos.
       </p>
-
-      <StepNav
-        hideBack
-        canContinue={allFilled}
-        continueLabel={allFilled ? 'Continue' : `Add ${remaining} more photo${remaining > 1 ? 's' : ''}`}
-      />
     </section>
   )
 }
