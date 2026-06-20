@@ -8,6 +8,9 @@ export const CONFIG = {
   appsScriptUrl: import.meta.env.VITE_APPS_SCRIPT_URL || '',
   // Default Drive parent folder name (the script also defaults to this).
   driveParentFolder: import.meta.env.VITE_DRIVE_PARENT_FOLDER || 'Sari Sari Orders',
+  // Shared token checked by the Apps Script — a speed bump against bots, not
+  // real auth (it's bundled into the public JS like everything else here).
+  apiToken: import.meta.env.VITE_API_TOKEN || '',
   currency: 'PHP',
   currencySymbol: '₱',
 }
