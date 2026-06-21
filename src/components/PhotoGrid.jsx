@@ -23,6 +23,13 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { readableInk } from '../config/colors.js'
+import { POCKET_RADIUS_PCT } from '../config/blueprint.js'
+
+// Pocket corner radius (5mm of a 52mm cell) — a plain CSS percentage is
+// accurate here with no pixel measurement needed, because every cell is
+// forced aspect-square (width === height), so it can't distort into an
+// ellipse the way the outer frame's radius would. See blueprint.js.
+const cellRadius = { borderRadius: `${POCKET_RADIUS_PCT}%` }
 
 function SortableCell({ photo }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -32,6 +39,7 @@ function SortableCell({ photo }) {
     transition,
     opacity: isDragging ? 0.35 : 1,
     zIndex: isDragging ? 20 : 1,
+    ...cellRadius,
   }
   return (
     <div
@@ -39,7 +47,7 @@ function SortableCell({ photo }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="relative aspect-square touch-none select-none overflow-hidden rounded-[7%] ring-1 ring-black/10 cursor-grab active:cursor-grabbing"
+      className="relative aspect-square touch-none select-none overflow-hidden ring-1 ring-black/10 cursor-grab active:cursor-grabbing"
     >
       <img
         src={photo.url}
@@ -56,7 +64,7 @@ function StaticCell({ photo, index, frameHex, onEmptyClick }) {
 
   if (photo) {
     return (
-      <div className="relative aspect-square overflow-hidden rounded-[7%] ring-1 ring-black/10">
+      <div className="relative aspect-square overflow-hidden ring-1 ring-black/10" style={cellRadius}>
         <img src={photo.url} alt={photo.name} className="h-full w-full object-cover" />
       </div>
     )
@@ -71,10 +79,10 @@ function StaticCell({ photo, index, frameHex, onEmptyClick }) {
       disabled={!clickable}
       aria-label={`Add photo to slot ${index + 1}`}
       className={[
-        'relative flex aspect-square w-full flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[7%] ring-1 ring-black/10 transition',
+        'relative flex aspect-square w-full flex-col items-center justify-center gap-0.5 overflow-hidden ring-1 ring-black/10 transition',
         clickable ? 'cursor-pointer hover:brightness-95' : 'cursor-default',
       ].join(' ')}
-      style={{ background: `color-mix(in srgb, ${frameHex} 86%, ${ink} 14%)`, color: ink }}
+      style={{ background: `color-mix(in srgb, ${frameHex} 86%, ${ink} 14%)`, color: ink, ...cellRadius }}
     >
       <span className="font-mono text-[clamp(15px,3.4vw,20px)] leading-none opacity-60">+</span>
       <span className="font-mono text-[clamp(9px,2vw,11px)] opacity-40">{index + 1}</span>
@@ -85,10 +93,12 @@ function StaticCell({ photo, index, frameHex, onEmptyClick }) {
 export default function PhotoGrid({
   photos,
   cols,
+  rows,
   frameHex,
   interactive = false,
   onReorder,
   onEmptyClick,
+  gapPx,
 }) {
   const allFilled = photos.length > 0 && photos.every(Boolean)
   const enableDrag = interactive && allFilled
@@ -100,10 +110,16 @@ export default function PhotoGrid({
   )
   const [, setDragging] = useState(false)
 
-  const gridStyle = { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }
+  // gapPx comes from FramePreview's measured-px blueprint scale (real 3mm
+  // gap); until that first measurement lands, fall back to the old ~3.5%
+  // approximation via Tailwind so nothing flashes to a 0 gap.
+  const gridStyle = {
+    gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+    ...(gapPx ? { gap: `${gapPx}px` } : {}),
+  }
 
   const grid = (
-    <div className="grid gap-[3.5%]" style={gridStyle}>
+    <div className={gapPx ? 'grid' : 'grid gap-[3.5%]'} style={gridStyle}>
       {photos.map((p, i) =>
         enableDrag && p ? (
           <SortableCell key={p.id} photo={p} />
