@@ -14,7 +14,11 @@
 // sourced from Photo Library - Web Optimized/10_Catalog-Size_Empty/. Wide Shot has
 // no exact 4-in-a-row horizontal shot in the library — using the closest available
 // (the 1x4 vertical strip) as an approximation; revisit if a true wide 4-strip shot
-// is ever added to the library.
+// is ever added to the library. Eight Tiles and Darling Dozen deliberately have NO
+// `photo` (2026-06-21) — the only landscape-oriented source shots for these two were
+// either wrong-oriented or color-mismatched after multiple attempts; reverted to the
+// dot-grid icon only rather than keep shipping a photo that looked worse than no photo.
+// Revisit if/when a clean, correctly-lit landscape 8-cell/12-cell shot is available.
 
 export const SKUS = [
   { id: 'SOLO',          name: 'Solo',          slots: 1,  base: { cols: 1, rows: 1 }, orientation: 'none',       price: 388,  photo: '/sku-photos/solo.jpg',          blurb: 'One photo, all the feeling.' },
@@ -23,9 +27,9 @@ export const SKUS = [
   { id: 'WIDE SHOT',     name: 'Wide Shot',     slots: 4,  base: { cols: 4, rows: 1 }, orientation: 'horizontal', price: 988,  photo: '/sku-photos/wide-shot.jpg',     blurb: 'A panorama of four.' },
   { id: 'CLASSIC',       name: 'Classic',       slots: 4,  base: { cols: 2, rows: 2 }, orientation: 'none',       price: 888,  photo: '/sku-photos/classic.jpg',       hero: true, blurb: 'The 2×2 keepsake. Most-loved.' },
   { id: 'SIX PACK',      name: 'Six Pack',      slots: 6,  base: { cols: 3, rows: 2 }, orientation: 'toggle',     price: 1288, photo: '/sku-photos/six-pack.jpg',      blurb: 'Half a dozen to hold onto.' },
-  { id: 'EIGHT TILES',   name: 'Eight Tiles',   slots: 8,  base: { cols: 4, rows: 2 }, orientation: 'horizontal', price: 1688, photo: '/sku-photos/eight-tiles.jpg',   blurb: 'A wall of eight, in one frame.' },
+  { id: 'EIGHT TILES',   name: 'Eight Tiles',   slots: 8,  base: { cols: 4, rows: 2 }, orientation: 'horizontal', price: 1688, blurb: 'A wall of eight, in one frame.' },
   { id: 'GRIDSTAGRAM',   name: 'Gridstagram',   slots: 9,  base: { cols: 3, rows: 3 }, orientation: 'none',       price: 1788, photo: '/sku-photos/gridstagram.jpg',   blurb: 'The perfect 3×3 grid.' },
-  { id: 'DARLING DOZEN', name: 'Darling Dozen', slots: 12, base: { cols: 4, rows: 3 }, orientation: 'horizontal', price: 2488, photo: '/sku-photos/darling-dozen.jpg', blurb: 'Twelve. The whole story.' },
+  { id: 'DARLING DOZEN', name: 'Darling Dozen', slots: 12, base: { cols: 4, rows: 3 }, orientation: 'horizontal', price: 2488, blurb: 'Twelve. The whole story.' },
 ]
 
 export const DEFAULT_SKU_ID = 'CLASSIC' // hero, pre-selected
