@@ -22,10 +22,10 @@ function MiniGrid({ cols, rows }) {
   )
 }
 
-// Landscape tile: text column on the left, real photo on the right. Selected
-// photo bleeds flush to the card's own rounded edge (no gap, no radius of its
-// own — it's clipped by the card's overflow-hidden + rounded-2xl); unselected
-// photo is a smaller inset thumbnail with its own margin + rounded corners.
+// Icon-only tile (2026-06-21: the real-photo treatment was rolled back
+// entirely — kept misrepresenting several SKUs' true shape and was a
+// recurring source of bugs; back to the brand-coloured dot grid only).
+// Taller than the original card so the icon + copy don't feel cramped.
 function SkuTile({ sku, selected, onSelect }) {
   return (
     <button
@@ -33,62 +33,26 @@ function SkuTile({ sku, selected, onSelect }) {
       onClick={() => onSelect(sku.id)}
       aria-pressed={selected}
       className={[
-        'relative flex h-32 w-full overflow-hidden rounded-2xl bg-card text-left transition',
+        'relative flex h-44 w-full flex-col justify-between rounded-2xl bg-card p-4 text-left transition',
         selected ? 'ring-2 ring-selected shadow-card' : 'ring-1 ring-line hover:ring-rail',
       ].join(' ')}
     >
       {sku.hero && (
-        <span className="absolute right-2 top-2 z-10 rounded-full bg-selected px-2 py-0.5 font-mono text-[11px] text-white">
+        <span className="absolute right-3 top-3 z-10 rounded-full bg-selected px-2 py-0.5 font-mono text-[11px] text-white">
           Popular
         </span>
       )}
 
-      <div className="z-10 flex w-[46%] shrink-0 flex-col justify-between p-3">
-        <span className="text-selected">
-          <MiniGrid cols={sku.base.cols} rows={sku.base.rows} />
+      <span className="text-selected">
+        <MiniGrid cols={sku.base.cols} rows={sku.base.rows} />
+      </span>
+      <span>
+        <span className="block font-display text-lg leading-tight text-ink">{sku.name}</span>
+        <span className="label-mono">
+          {sku.slots} {sku.slots > 1 ? 'photos' : 'photo'}
         </span>
-        <span>
-          <span className="block font-display text-base leading-tight text-ink">{sku.name}</span>
-          <span className="label-mono">
-            {sku.slots} {sku.slots > 1 ? 'photos' : 'photo'}
-          </span>
-        </span>
-        <span className="font-mono text-sm text-ink-sec">{peso(sku.price)}</span>
-      </div>
-
-      {sku.photo && (
-        // Selected = full-bleed (clipped flush by the card's own rounded-2xl +
-        // overflow-hidden); unselected = a smaller inset thumbnail with its own
-        // margin + tighter corners. Both states are expressed as real, shared
-        // CSS properties (not a Tailwind class swap) so `transition-all` can
-        // morph between them smoothly instead of snapping.
-        <img
-          src={sku.photo}
-          alt={sku.name}
-          className="absolute object-cover transition-all duration-300 ease-out"
-          style={
-            selected
-              ? {
-                  top: 0,
-                  bottom: 0,
-                  right: 0,
-                  width: '56%',
-                  height: '100%',
-                  borderRadius: 0,
-                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0)',
-                }
-              : {
-                  top: '0.75rem',
-                  bottom: '0.75rem',
-                  right: '0.75rem',
-                  width: '46%',
-                  height: 'calc(100% - 1.5rem)',
-                  borderRadius: '0.75rem',
-                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)',
-                }
-          }
-        />
-      )}
+      </span>
+      <span className="font-mono text-sm text-ink-sec">{peso(sku.price)}</span>
     </button>
   )
 }
