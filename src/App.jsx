@@ -1,8 +1,9 @@
 // SariSari Snaps — order configurator. Phases 2–4: real Drive save / Sheet
 // write / confirmation email / Mailchimp when VITE_APPS_SCRIPT_URL is set;
 // otherwise falls back to the Phase 1 mock submit.
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useOrderStore } from './store/useOrderStore.js'
+import { skuById } from './config/skus.js'
 import { BRAND, IS_MOCK } from './config/app.js'
 import { savePhoto, submitOrder } from './lib/api.js'
 import Stepper from './components/Stepper.jsx'
@@ -51,6 +52,19 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState(null)
+
+  // Deep-link from the marketing site: /?sku=CLASSIC pre-selects that SKU
+  // before the customer sees Step 1. Runs once on load; silently ignored if
+  // the param is missing or doesn't match a real SKU id (no error shown —
+  // worst case they just land on the default like any normal visit).
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get('sku')
+    if (!param) return
+    const id = param.toUpperCase()
+    if (skuById(id)) {
+      useOrderStore.getState().selectSku(id)
+    }
+  }, [])
 
   const handleSubmit = async () => {
     setSubmitting(true)
